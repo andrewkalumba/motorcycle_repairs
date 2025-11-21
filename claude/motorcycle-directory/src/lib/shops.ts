@@ -45,6 +45,19 @@ function calculateDistance(
 }
 
 /**
+ * Normalize shop data by converting string numbers to actual numbers
+ */
+function normalizeShopData(shop: any): MotorcycleShop {
+  return {
+    ...shop,
+    latitude: shop.latitude !== null ? parseFloat(shop.latitude) : null,
+    longitude: shop.longitude !== null ? parseFloat(shop.longitude) : null,
+    rating: shop.rating !== null ? parseFloat(shop.rating) : null,
+    reviews_count: shop.reviews_count !== null ? parseInt(shop.reviews_count) : null,
+  };
+}
+
+/**
  * Search shops with optional filters
  */
 export async function searchShops(
@@ -65,6 +78,11 @@ export async function searchShops(
       query = query.ilike('city', `%${filters.city}%`);
     }
 
+    // Apply country filter
+    if (filters.country) {
+      query = query.ilike('country', `%${filters.country}%`);
+    }
+
     // Apply rating filter
     if (filters.minRating) {
       query = query.gte('rating', filters.minRating);
@@ -80,7 +98,8 @@ export async function searchShops(
       return { shops: [], error: error.message };
     }
 
-    let shops: ShopWithDistance[] = data || [];
+    // Normalize data to ensure numbers are numbers, not strings
+    let shops: ShopWithDistance[] = (data || []).map(normalizeShopData);
 
     // Calculate distance if user coordinates provided
     if (filters.userLatitude !== undefined && filters.userLongitude !== undefined) {
@@ -143,7 +162,7 @@ export async function getShopById(
       return { shop: null, error: error.message };
     }
 
-    return { shop: data, error: null };
+    return { shop: data ? normalizeShopData(data) : null, error: null };
   } catch (error) {
     console.error('Error fetching shop:', error);
     return { shop: null, error: 'Failed to fetch shop' };
@@ -185,7 +204,7 @@ export async function getShopsByCity(
       return { shops: [], error: error.message };
     }
 
-    return { shops: data || [], error: null };
+    return { shops: (data || []).map(normalizeShopData), error: null };
   } catch (error) {
     console.error('Error fetching shops by city:', error);
     return { shops: [], error: 'Failed to fetch shops' };
@@ -239,8 +258,31 @@ export async function getUserLocation(): Promise<{
         });
       },
       (error) => {
-        console.error('Error getting user location:', error);
+        // Properly extract error details from GeolocationPositionError
+        let errorMessage = 'Unknown error';
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'User denied the request for geolocation';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'The request to get user location timed out';
+            break;
+        }
+
+        console.error('Error getting user location:', {
+          code: error.code,
+          message: error.message || errorMessage,
+        });
         resolve(null);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000, // Cache location for 5 minutes
       }
     );
   });

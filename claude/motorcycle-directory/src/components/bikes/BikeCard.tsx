@@ -54,7 +54,7 @@ export function BikeCard({ bike, onView, onEdit, onDelete }: BikeCardProps) {
                 <span className="ml-2 font-medium">{bike.engineSize}cc</span>
               </div>
             )}
-            {bike.currentMileage !== undefined && (
+            {bike.currentMileage !== undefined && bike.currentMileage !== null && (
               <div>
                 <span className="text-gray-600">Mileage:</span>
                 <span className="ml-2 font-medium">{bike.currentMileage.toLocaleString()} km</span>

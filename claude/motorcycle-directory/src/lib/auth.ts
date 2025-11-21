@@ -44,9 +44,6 @@ export async function registerUser(userData: UserRegistration): Promise<{ user: 
       return { user: null, error: 'Registration failed' };
     }
 
-    // Wait a moment for the trigger to create the profile
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
     // Update the profile with additional data if trigger only created basic profile
     const updateData: any = {};
     if (userData.phone) updateData.phone = userData.phone;

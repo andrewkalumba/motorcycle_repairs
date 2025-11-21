@@ -29,16 +29,19 @@ export default function DashboardPage() {
 
     setLoading(true);
 
-    // Load bikes
-    const { bikes: userBikes } = await getUserBikesWithService(user.id);
+    // Load all data in parallel for better performance
+    const [
+      { bikes: userBikes },
+      { appointments: upcomingAppts },
+      { reminders: activeReminders }
+    ] = await Promise.all([
+      getUserBikesWithService(user.id),
+      getUpcomingAppointments(user.id),
+      getUserReminders(user.id)
+    ]);
+
     setBikes(userBikes);
-
-    // Load upcoming appointments
-    const { appointments: upcomingAppts } = await getUpcomingAppointments(user.id);
     setAppointments(upcomingAppts);
-
-    // Load reminders
-    const { reminders: activeReminders } = await getUserReminders(user.id);
     setReminders(activeReminders);
 
     setLoading(false);

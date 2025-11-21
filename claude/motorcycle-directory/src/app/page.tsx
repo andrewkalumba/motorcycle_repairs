@@ -30,7 +30,9 @@ export default function Home() {
   useEffect(() => {
     async function loadShops() {
       try {
-        const data = await fetchMotorcycleShops();
+        // Load only 100 shops initially for better performance
+        // Users can load more if needed
+        const data = await fetchMotorcycleShops(100);
         // Shuffle the shops array for random order on each page load
         const shuffledData = shuffleArray(data);
         setShops(shuffledData);

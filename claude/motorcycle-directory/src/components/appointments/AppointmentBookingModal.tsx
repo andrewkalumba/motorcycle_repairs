@@ -10,6 +10,7 @@ import { MotorcycleShop } from '@/types/shop';
 import { Bike } from '@/types/bike';
 import { createAppointment } from '@/lib/appointments';
 import { SERVICE_CATEGORIES } from '@/lib/shopFinder';
+import { ServiceCategory } from '@/types/service';
 
 interface AppointmentBookingModalProps {
   isOpen: boolean;
@@ -39,8 +40,8 @@ export function AppointmentBookingModal({
   onSuccess,
 }: AppointmentBookingModalProps) {
   const [bikeId, setBikeId] = useState(preSelectedBikeId || (bikes[0]?.id || ''));
-  const [serviceCategory, setServiceCategory] = useState(preSelectedServiceCategory || '');
-  const [serviceType, setServiceType] = useState('');
+  const [serviceCategory, setServiceCategory] = useState<ServiceCategory | ''>((preSelectedServiceCategory as ServiceCategory) || '');
+  const [serviceType, setServiceType] = useState<'repair' | 'maintenance' | 'inspection' | 'customization'>('repair');
   const [description, setDescription] = useState('');
   const [urgency, setUrgency] = useState<'immediate' | 'within_week' | 'routine'>('routine');
   const [appointmentDate, setAppointmentDate] = useState('');
@@ -50,21 +51,11 @@ export function AppointmentBookingModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Update service type when category changes
-  useEffect(() => {
-    if (serviceCategory) {
-      const category = SERVICE_CATEGORIES.find((c) => c.value === serviceCategory);
-      if (category) {
-        setServiceType(category.label);
-      }
-    }
-  }, [serviceCategory]);
-
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setBikeId(preSelectedBikeId || (bikes[0]?.id || ''));
-      setServiceCategory(preSelectedServiceCategory || '');
+      setServiceCategory((preSelectedServiceCategory as ServiceCategory) || '');
       setDescription('');
       setUrgency('routine');
       setAppointmentDate('');
@@ -84,8 +75,8 @@ export function AppointmentBookingModal({
       return;
     }
 
-    if (!serviceCategory || !serviceType) {
-      setError('Please select a service type');
+    if (!serviceCategory) {
+      setError('Please select a service category');
       return;
     }
 
@@ -121,7 +112,7 @@ export function AppointmentBookingModal({
         shopId: shop.id,
         appointmentDate: appointmentDateTime.toISOString(),
         serviceType,
-        serviceCategory,
+        serviceCategory: serviceCategory || undefined,
         description,
         urgency,
         notes: notes || undefined,
@@ -211,7 +202,7 @@ export function AppointmentBookingModal({
             </label>
             <Select
               value={serviceCategory}
-              onChange={(e) => setServiceCategory(e.target.value)}
+              onChange={(e) => setServiceCategory(e.target.value as ServiceCategory | '')}
               options={[
                 { value: '', label: 'Select service type...' },
                 ...SERVICE_CATEGORIES.map((cat) => ({

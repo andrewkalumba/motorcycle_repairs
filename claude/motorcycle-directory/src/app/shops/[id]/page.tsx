@@ -42,12 +42,17 @@ export default function ShopDetailPage() {
   const loadData = async () => {
     setLoading(true);
 
-    const { shop: shopData } = await getShopById(shopId);
-    setShop(shopData);
-
+    // Load shop and bikes in parallel for better performance
     if (user) {
-      const { bikes: userBikes } = await getUserBikes(user.id);
+      const [{ shop: shopData }, { bikes: userBikes }] = await Promise.all([
+        getShopById(shopId),
+        getUserBikes(user.id)
+      ]);
+      setShop(shopData);
       setBikes(userBikes);
+    } else {
+      const { shop: shopData } = await getShopById(shopId);
+      setShop(shopData);
     }
 
     setLoading(false);
